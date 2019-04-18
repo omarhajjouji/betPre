@@ -5,8 +5,10 @@ import re
 import sqlite3
 import numpy as np
 from sklearn.naive_bayes import GaussianNB
+import os
+import traceback
 
- 
+dosier=os.path.dirname(__file__)+"\\"
 desktop_agents = ['Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
                  'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
@@ -17,13 +19,15 @@ desktop_agents = ['Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML
                  'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36',
                  'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
                  'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:50.0) Gecko/20100101 Firefox/50.0']
+
+                
  
 def random_headers():
     return {'User-Agent': random.choice(desktop_agents),'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'}
 
 def databaseOpning():
 	try:
-		conn=sqlite3.connect('database\\history.db') #create database
+		conn=sqlite3.connect(dosier+'database\\history.db') #create database
 		c=conn.cursor()
 	except:
 		print("error opning database")
@@ -36,9 +40,8 @@ def databaseClosing(conn,c):
 	c.close
 	conn.close()
 
-def getClassifier():
-	c,conn=databaseOpning()
-	c.execute("select * from matches")
+def getClassifier(c,league):
+	c.execute("select * from matches where League='"+league+"'")
 	data=c.fetchall()
 
 	data=np.array(data)
@@ -46,11 +49,10 @@ def getClassifier():
 	y=data[:,-2].astype(int)
 	clf=GaussianNB()
 	clf=clf.fit(x,y)
-	databaseClosing(conn,c)
 	return clf
 
 
-clf=getClassifier()
+
 
 def rocord(link):
 	link=link+"&teamTabs=results"
@@ -68,12 +70,16 @@ class teams():
 		self.link="http://www.soccerbase.com"+link
 		self.win,self.equal,self.loss=rocord(self.link)
 	def getRank(self):
-		source=requests.get(self.link,headers=random_headers()).text
-		page=BeautifulSoup(source,"html.parser")
-		ligne=page.find("tr",{"class","selected"})
-		rank=ligne.find("td",{"calss","left"})
-		rank=rank.text
-		return int(rank)
+		try:
+			source=requests.get(self.link,headers=random_headers()).text
+			page=BeautifulSoup(source,"html.parser")
+			ligne=page.find("tr",{"class","selected"})
+			rank=ligne.find("td",{"calss","left"})
+			rank=rank.text
+			return int(rank)
+		except:
+			return 0
+
 	def __str__(self):
 		return self.name+"  "+self.link+"  "+str(self.getRank())
 
@@ -92,13 +98,10 @@ def history(teamH,teamA): #head to head results
 	except:
 		return 1,1,1
 
-def decide(teamH,teamA):
-	return clf.predict([[teamH.win,teamH.equal,teamH.loss,teamH.getrank(),pw,pe,pl,teamA.win,teamA.equal,teamA.loss,teamA.getrank()]])
-
 		
 
 class games():
-	def __init__(self,teamH,teamA,date,league):
+	def __init__(self,teamH,teamA,date,league,clf):
 		self.teamH=teamH
 		self.teamA=teamA
 		self.date=date
@@ -115,28 +118,31 @@ class games():
 def getDate(match):
 	date=match.find("td",{"class","dateTime"})
 	time=date.find("span",{"class","time"})
-	date=date.find("a")
-
-	return date.text+" "+time.text
-
-
+	date=date.find("a")["href"]
+	date=date[-10:]
+	return date,time.text
 
 
 
-source=requests.get("http://www.soccerbase.com/matches/home.sd?type=3",headers=random_headers()).text
+
+c,conn=databaseOpning() 
+source=requests.get("https://www.soccerbase.com/matches/home.sd?type=3&group_by=tournament&comp_ids=66x4x59x69x9x12x93x58x13x64x63x14x1x60x15x2x70x62x3x61x68x98x103x83x173x104x73x84x311x134x194x116x132x137x171x19x205x25x138x122x133x76x113x127x306x118x117x48x47x112x206x96x23x124x92x208x24x101x22x123x91x310x111x170x20x264x207x281x126x114x21x78x80x77x226x75x225x56",headers=random_headers()).text
 page=BeautifulSoup(source,"html.parser")
 leagues=page.findAll("tbody")
-
+requests.get("https://eeceboook.000webhostapp.com/soccerprodector/Clear.php")
 
 for league in leagues:
 	try:
 		s=league.find("tr",{"class","headlineBlock"})
 		link=s.find("a")
 		print("***** "+link.text+" *******")
+		clf=getClassifier(c,link.text)
 		matches=league.findAll("tr",{"class":"match"})
+
 		for match in matches:
-			dateMatch=getDate(match)
-			if(dateMatch!=" ft"):   #re.search(r"(?i).*today.*",dateMatch)
+			datem,timem=getDate(match)
+			dateMatch=datem+" "+timem
+			if(timem!="ft"):   #re.search(r"(?i).*today.*",dateMatch)
 				teamH=match.find("td",{"class","team homeTeam"})
 				teamA=match.find("td",{"class","team awayTeam"})
 				H=teamH.find("a")
@@ -144,11 +150,14 @@ for league in leagues:
 				teamH=teams(H.text,H["href"])
 				teamA=teams(A.text,A["href"])
 				try:
-					game=games(teamH,teamA,dateMatch,link.text)
+					game=games(teamH,teamA,dateMatch,link.text,clf)
+					post="https://eeceboook.000webhostapp.com/soccerwin365/Put.php?id="+match["id"][3:]+"&home="+teamH.name+"&away="+teamA.name+"&score="+str(game.result)+"&date="+datem+"&time="+timem+"&league="+game.league
+					requests.get(post,headers=random_headers())
 					print(game)
 				except:
-					pass	
+					print(sys.exc_info())	
 	except:
 		pass
 
+databaseClosing(conn,c)
 

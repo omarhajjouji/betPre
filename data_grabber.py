@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import random
 import re
 import sqlite3
+import traceback
+import sys
 
 def databaseOpning():
 	try:
@@ -57,12 +59,15 @@ class teams():
 		self.win,self.equal,self.loss=rocord(self.link)
 		self.gain=self.win-self.loss
 	def getRank(self):
-		source=requests.get(self.link,headers=random_headers()).text
-		page=BeautifulSoup(source,"html.parser")
-		ligne=page.find("tr",{"class","selected"})
-		rank=ligne.find("td",{"calss","left"})
-		rank=rank.text
-		return int(rank)
+		try:
+			source=requests.get(self.link,headers=random_headers()).text
+			page=BeautifulSoup(source,"html.parser")
+			ligne=page.find("tr",{"class","selected"})
+			rank=ligne.find("td",{"calss","left"})
+			rank=rank.text
+			return int(rank)
+		except:
+			return 0	
 	
 	def __str__(self):
 		return self.name+"  "+self.link+"  "+str(self.getRank())	
@@ -85,7 +90,7 @@ def history(teamH,teamA): #head to head results
 
 
 c,conn=databaseOpning()
-source=requests.get("https://www.soccerbase.com/results/home.sd",headers=random_headers()).text
+source=requests.get("https://www.soccerbase.com/results/home.sd?type=3&group_by=tournament&comp_ids=66x4x59x69x9x12x93x58x13x64x63x14x1x60x15x2x70x62x3x61x68x98x103x83x173x104x73x84x311x134x194x116x132x137x171x19x205x25x138x122x133x76x113x127x306x118x117x48x47x112x206x96x23x124x92x208x24x101x22x123x91x310x111x170x20x264x207x281x126x114x21x78x80x77x226x75x225x56",headers=random_headers()).text
 page=BeautifulSoup(source,"html.parser")
 leagues=page.findAll("tbody")
 for league in leagues:
@@ -103,11 +108,13 @@ for league in leagues:
 			teamA=teams(A.text,A["href"])
 			result=getresult(match)
 			try:
-				print(str(teamH.win)+" "+str(teamH.equal)+" "+str(teamA.loss)+" "+str(teamH.getRank()))
 				pw,pe,pl=history(teamH,teamA)
 				c.execute("insert into matches values("+match["id"][3:]+","+str(teamH.win)+","+str(teamH.equal)+","+str(teamH.loss)+","+str(teamH.getRank())+","+str(round(pw,5))+","+str(round(pe,5))+","+str(round(pl,5))+","+str(teamA.win)+","+str(teamA.equal)+","+str(teamA.loss)+","+str(teamA.getRank())+","+str(result)+",'"+link.text+"');")
+				print(teamH.name+" - "+teamA.name)
+				print(str(teamH.win)+" "+str(teamH.equal)+" "+str(teamA.loss)+" "+str(teamH.getRank()))	
 			except:
-				pass	
+				print(sys.exc_info())	
 	except:
-		pass
-databaseClosing(conn,c)		
+		print(sys.exc_info())
+		
+databaseClosing(conn,c)

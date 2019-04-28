@@ -129,7 +129,7 @@ c,conn=databaseOpning()
 source=requests.get("https://www.soccerbase.com/matches/home.sd?type=3&group_by=tournament&comp_ids=66x4x59x69x9x12x93x58x13x64x63x14x1x60x15x2x70x62x3x61x68x98x103x83x173x104x73x84x311x134x194x116x132x137x171x19x205x25x138x122x133x76x113x127x306x118x117x48x47x112x206x96x23x124x92x208x24x101x22x123x91x310x111x170x20x264x207x281x126x114x21x78x80x77x226x75x225x56",headers=random_headers()).text
 page=BeautifulSoup(source,"html.parser")
 leagues=page.findAll("tbody")
-requests.get("https://eeceboook.000webhostapp.com/soccerprodector/Clear.php")
+requests.get("https://eeceboook.000webhostapp.com/soccerwin365/Clear.php")
 
 for league in leagues:
 	try:
@@ -151,7 +151,7 @@ for league in leagues:
 				teamA=teams(A.text,A["href"])
 				try:
 					game=games(teamH,teamA,dateMatch,link.text,clf)
-					post="https://eeceboook.000webhostapp.com/soccerwin365/Put.php?id="+match["id"][3:]+"&home="+teamH.name+"&away="+teamA.name+"&score="+str(game.result)+"&date="+datem+"&time="+timem+"&league="+game.league
+					post="https://eeceboook.000webhostapp.com/soccerwin365/Put.php?id="+match["id"][3:]+"&home="+teamH.name+"&away="+teamA.name+"&score="+str(game.result)+"&date="+datem+"&time="+timem+"&league="+game.league+"&HId="+teamH.id+"&AId="+teamA.id
 					requests.get(post,headers=random_headers())
 					print(game)
 				except:

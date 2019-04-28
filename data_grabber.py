@@ -8,7 +8,7 @@ import sys
 
 def databaseOpning():
 	try:
-		conn=sqlite3.connect('database\\history.db') #create database
+		conn=sqlite3.connect('database/history.db') #create database
 		c=conn.cursor()
 	except:
 		print("error opning database")

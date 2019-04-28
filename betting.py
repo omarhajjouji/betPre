@@ -8,7 +8,7 @@ from sklearn.naive_bayes import GaussianNB
 import os
 import traceback
 
-dosier=os.path.dirname(__file__)+"\\"
+dosier=os.path.dirname(__file__)+"/"
 desktop_agents = ['Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
                  'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36',
@@ -27,7 +27,7 @@ def random_headers():
 
 def databaseOpning():
 	try:
-		conn=sqlite3.connect(dosier+'database\\history.db') #create database
+		conn=sqlite3.connect(dosier+'database/history.db') #create database
 		c=conn.cursor()
 	except:
 		print("error opning database")

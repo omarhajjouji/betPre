@@ -1,6 +1,7 @@
 import sqlite3
 import numpy as np
 from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
 import time
 import matplotlib.pyplot as plt
 import sys
@@ -8,7 +9,9 @@ import sys
 # better classifier but not stable 
 #from sklearn.ensemble import RandomForestClassifier
 #clf = RandomForestClassifier(n_estimators=100)
+#clf =GaussianNB()
 
+clf=LogisticRegression(random_state=0, solver='lbfgs',multi_class='multinomial')
 def databaseOpning():
 	try:
 		conn=sqlite3.connect('database\\history.db') #create database
@@ -66,7 +69,8 @@ for league in leagues:
 
 		xt=x[:training_data_size]
 		yt=y[:training_data_size]
-		clf =GaussianNB()
+		
+
 		clf=clf.fit(xt,yt)
 
 

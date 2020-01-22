@@ -74,18 +74,15 @@ class teams():
 
 def history(teamH,teamA): #head to head results
 	link="http://www.soccerbase.com/teams/head_to_head.sd?team_id="+teamH.id+"&"+"team2_id="+teamA.id
-	try:
-		matches=requests.get(link,headers=random_headers()).text
-		matches=BeautifulSoup(matches,"html.parser")
-		tr=matches.find("tr",{"class","total"})
-		results=tr.findAll("td")
-		wins=int(results[1].text)
-		equal=int(results[2].text)
-		loss=int(results[3].text)
-		allH2H=wins+equal+loss
-		return wins/allH2H,loss/allH2H,equal/allH2H
-	except:
-		return 1,1,1
+	matches=requests.get(link,headers=random_headers()).text
+	matches=BeautifulSoup(matches,"html.parser")
+	tr=matches.find("tr",{"class","total"})
+	results=tr.findAll("td")
+	wins=int(results[1].text)
+	equal=int(results[2].text)
+	loss=int(results[3].text)
+	allH2H=wins+equal+loss
+	return wins/allH2H,loss/allH2H,equal/allH2H
 
 
 
@@ -111,7 +108,7 @@ for league in leagues:
 				pw,pe,pl=history(teamH,teamA)
 				c.execute("insert into matches values("+match["id"][3:]+","+str(teamH.win)+","+str(teamH.equal)+","+str(teamH.loss)+","+str(teamH.getRank())+","+str(round(pw,5))+","+str(round(pe,5))+","+str(round(pl,5))+","+str(teamA.win)+","+str(teamA.equal)+","+str(teamA.loss)+","+str(teamA.getRank())+","+str(result)+",'"+link.text+"');")
 				print(teamH.name+" - "+teamA.name)
-				print(str(teamH.win)+" "+str(teamH.equal)+" "+str(teamA.loss)+" "+str(teamH.getRank()))	
+				print(str(result))	
 			except:
 				print(sys.exc_info())	
 	except:

@@ -52,6 +52,19 @@ def getClassifier(c,league):
 	return clf
 
 
+def butsRate(page):
+	try:
+		scores=page.findAll("td",{"class","score"})
+		total=0
+		for score in scores:
+			s=score.findAll("em")
+			total+=int(s[0].text)+int(s[1].text)
+
+		print("goals rate : "+str(round(total/len(scores),2)))
+		return round(total/len(scores),2)
+	except:
+		return 1	
+	
 
 
 def rocord(link):
@@ -94,9 +107,9 @@ def history(teamH,teamA): #head to head results
 		equal=int(results[2].text)
 		loss=int(results[3].text)
 		allH2H=wins+equal+loss
-		return round(wins/allH2H,5),round(loss/allH2H,5),round(equal/allH2H,5)
+		return round(wins/allH2H,5),round(loss/allH2H,5),round(equal/allH2H,5),butsRate(matches)
 	except:
-		return 1,1,1
+		return 1,1,1,1
 
 		
 
@@ -105,7 +118,7 @@ class games():
 		self.teamH=teamH
 		self.teamA=teamA
 		self.date=date
-		self.pw,self.pe,self.pl=history(teamH,teamA)
+		self.pw,self.pe,self.pl,self.but_rate=history(teamH,teamA)
 		self.result=int(clf.predict([[self.teamH.win,self.teamH.equal,self.teamH.loss,self.teamH.getRank(),self.pw,self.pe,self.pl,self.teamA.win,self.teamA.equal,self.teamA.loss,self.teamA.getRank()]])[0])
 		self.league=league
 		
@@ -130,6 +143,7 @@ source=requests.get("https://www.soccerbase.com/matches/home.sd?type=3&group_by=
 page=BeautifulSoup(source,"html.parser")
 leagues=page.findAll("tbody")
 requests.get("https://eeceboook.000webhostapp.com/soccerwin365/Clear.php")
+n_games=0
 
 for league in leagues:
 	try:
@@ -151,13 +165,15 @@ for league in leagues:
 				teamA=teams(A.text,A["href"])
 				try:
 					game=games(teamH,teamA,dateMatch,link.text,clf)
-					post="https://eeceboook.000webhostapp.com/soccerwin365/Put.php?id="+match["id"][3:]+"&home="+teamH.name+"&away="+teamA.name+"&score="+str(game.result)+"&date="+datem+"&time="+timem+"&league="+game.league+"&HId="+teamH.id+"&AId="+teamA.id
+					post="https://eeceboook.000webhostapp.com/soccerwin365/Put.php?id="+match["id"][3:]+"&home="+teamH.name+"&away="+teamA.name+"&score="+str(game.result)+"&date="+datem+"&time="+timem+"&league="+game.league+"&HId="+teamH.id+"&AId="+teamA.id+"&Brate="+str(game.but_rate)
 					requests.get(post,headers=random_headers())
 					print(game)
+					n_games+=1
 				except:
 					print(sys.exc_info())	
 	except:
 		pass
 
 databaseClosing(conn,c)
+print(n_games)
 
